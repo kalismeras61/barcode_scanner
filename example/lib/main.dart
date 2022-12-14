@@ -26,6 +26,11 @@ class MyHomePage extends StatefulWidget {
 
 class _MyHomePageState extends State<MyHomePage> {
   String barcode = 'Tap  to scan';
+  MobileScannerController controller = MobileScannerController(
+    detectionSpeed: DetectionSpeed.unrestricted,
+    detectionTimeoutMs: 50,
+    returnImage: false,
+  );
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -44,11 +49,19 @@ class _MyHomePageState extends State<MyHomePage> {
                     builder: (context) => AiBarcodeScanner(
                       //    validateText: 'https://', // link to be validated
                       //   validateType: ValidateType.startsWith,
+                      controller: controller,
+
                       onScan: (String value) {
                         debugPrint(value);
                         setState(() {
                           barcode = value;
                         });
+                      },
+                      allowDuplicates: false,
+                      autoResume: true,
+                      canPop: false,
+                      onDetect: (barcode) {
+                        debugPrint(barcode.rawValue!);
                       },
                     ),
                   ),

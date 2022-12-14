@@ -14,7 +14,7 @@ class AiBarcodeScanner extends StatefulWidget {
   ///
   /// [barcode] The barcode object with all information about the scanned code.
   /// [args] Information about the state of the MobileScanner widget
-  final Function(Barcode barcode, MobileScannerArguments? args)? onDetect;
+  final Function(Barcode barcode) onDetect;
 
   /// Validate barcode text with [ValidateType]
   /// [validateText] and [validateType] must be set together.
@@ -114,7 +114,7 @@ class AiBarcodeScanner extends StatefulWidget {
     this.allowDuplicates = false,
     this.fit = BoxFit.cover,
     this.controller,
-    this.onDetect,
+    required this.onDetect,
     this.borderColor = Colors.white,
     this.borderWidth = 10,
     this.overlayColor = const Color.fromRGBO(0, 0, 0, 80),
@@ -153,43 +153,45 @@ class _AiBarcodeScannerState extends State<AiBarcodeScanner> {
   bool? _isSuccess;
 
   /// Scanner controller
-  late MobileScannerController controller;
 
   @override
   void initState() {
-    controller = widget.controller ?? MobileScannerController();
     super.initState();
   }
 
   @override
   void dispose() {
-    controller.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
+    final scanWindow = Rect.fromCenter(
+      center: MediaQuery.of(context).size.center(Offset.zero),
+      width: 200,
+      height: 200,
+    );
     return Scaffold(
       body: Stack(
         children: [
           MobileScanner(
-            controller: controller,
+            controller: widget.controller,
             fit: widget.fit,
-            allowDuplicates: widget.allowDuplicates,
             key: widget.key,
-            onDetect: (barcode, args) {
-              widget.onDetect?.call(barcode, args);
-              if (barcode.rawValue?.isEmpty ?? true) {
+            scanWindow: scanWindow,
+            onDetect: (barcode) {
+              widget.onDetect.call(barcode.barcodes.first);
+              if (barcode.barcodes.first.rawValue?.isEmpty ?? true) {
                 debugPrint('Failed to scan Barcode');
                 return;
               }
               if (widget.validateText?.isNotEmpty ?? false) {
                 if (!widget.validateType!.toValidateTypeBool(
-                    barcode.rawValue!, widget.validateText!)) {
+                    barcode.barcodes.first.rawValue!, widget.validateText!)) {
                   if (!widget.allowDuplicates) {
                     HapticFeedback.vibrate();
                   }
-                  final String code = barcode.rawValue!;
+                  final String code = barcode.barcodes.first.rawValue!;
                   debugPrint('Invalid Barcode => $code');
                   _isSuccess = false;
                   setState(() {});
@@ -200,7 +202,7 @@ class _AiBarcodeScannerState extends State<AiBarcodeScanner> {
               if (!widget.allowDuplicates) {
                 HapticFeedback.mediumImpact();
               }
-              final String code = barcode.rawValue!;
+              final String code = barcode.barcodes.first.rawValue!;
               debugPrint('Barcode rawValue => $code');
               widget.onScan(code);
               setState(() {});
@@ -244,9 +246,9 @@ class _AiBarcodeScannerState extends State<AiBarcodeScanner> {
                     leading: IconButton(
                       color: Theme.of(context).primaryColor,
                       tooltip: "Switch Camera",
-                      onPressed: () => controller.switchCamera(),
+                      onPressed: () => widget.controller!.switchCamera(),
                       icon: ValueListenableBuilder<CameraFacing>(
-                        valueListenable: controller.cameraFacingState,
+                        valueListenable: widget.controller!.cameraFacingState,
                         builder: (context, state, child) {
                           switch (state) {
                             case CameraFacing.front:
@@ -264,9 +266,9 @@ class _AiBarcodeScannerState extends State<AiBarcodeScanner> {
                     ),
                     trailing: IconButton(
                       tooltip: "Torch",
-                      onPressed: () => controller.toggleTorch(),
+                      onPressed: () => widget.controller!.toggleTorch(),
                       icon: ValueListenableBuilder<TorchState>(
-                        valueListenable: controller.torchState,
+                        valueListenable: widget.controller!.torchState,
                         builder: (context, state, child) {
                           switch (state) {
                             case TorchState.off:
