@@ -27,8 +27,8 @@ class MyHomePage extends StatefulWidget {
 class _MyHomePageState extends State<MyHomePage> {
   String barcode = 'Tap  to scan';
   MobileScannerController controller = MobileScannerController(
-    detectionSpeed: DetectionSpeed.unrestricted,
-    detectionTimeoutMs: 50,
+    detectionSpeed: DetectionSpeed.noDuplicates,
+    detectionTimeoutMs: 75,
     returnImage: false,
   );
   @override
